@@ -1,0 +1,4 @@
+FRONT-END/node_modules/
+dist/
+!FRONT-END/dist/
+!FRONT-END/dist/**
