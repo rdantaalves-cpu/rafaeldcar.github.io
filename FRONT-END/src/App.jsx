@@ -42,6 +42,22 @@ function BarraNavegacao({ rotaAtual, aoNavegar }) {
   );
 }
 
+function CarrosselTexto() {
+  const itens = Array.from({ length: 12 }, () => "Portfólio 3ºD - Rafael Alves");
+
+  return (
+    <div className="carrossel-wrapper" aria-label="Carrossel de texto do portfolio">
+      <div className="carrossel-track">
+        {[...itens, ...itens].map((item, index) => (
+          <span key={`${item}-${index}`} className="carrossel-item">
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Apresentacao({ aoNavegar }) {
   const imagemApresentacao = new URL("./assets/img/projeto 2.jpeg", import.meta.url).href;
 
@@ -413,6 +429,7 @@ export default function Aplicativo() {
       <div className="site-shell">
         <header className="cabecalho-principal">
           <BarraNavegacao rotaAtual={rotaAtual} aoNavegar={setRotaAtual} />
+          <CarrosselTexto />
           <Apresentacao aoNavegar={setRotaAtual} />
         </header>
 

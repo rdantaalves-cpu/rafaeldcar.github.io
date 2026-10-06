@@ -59,6 +59,66 @@ header {
   padding-top: 88px;
 }
 
+.carrossel-wrapper {
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  position: relative;
+}
+
+.carrossel-wrapper::before,
+.carrossel-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 90px;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.carrossel-wrapper::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(11, 42, 54, 1) 0%, rgba(11, 42, 54, 0) 100%);
+}
+
+.carrossel-wrapper::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(11, 42, 54, 1) 0%, rgba(11, 42, 54, 0) 100%);
+}
+
+.carrossel-track {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  width: max-content;
+  padding: 15px 0;
+  white-space: nowrap;
+  animation: rodarTexto 60s linear infinite;
+}
+
+.carrossel-item {
+  display: inline-block;
+  font-size: clamp(0.78rem, 1.1vw, 1.08rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+}
+
+@keyframes rodarTexto {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 .barra-navegacao {
   position: fixed;
   top: 18px;
