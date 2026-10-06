@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { portfolioModel } from "./data/portfolioData";
 
 const menuLinks = [
-  { texto: "Início", destino: "#inicio" },
-  { texto: "Unidades", destino: "#unidades" },
-  { texto: "Atividades", destino: "#atividades" },
-  { texto: "Admin", destino: "#admin" },
+  { id: "inicio", texto: "Início" },
+  { id: "atividades", texto: "Atividades" },
+  { id: "admin", texto: "Admin" },
 ];
 
 const formInicial = {
@@ -19,16 +18,23 @@ const formInicial = {
   pdfNome: "",
 };
 
-function BarraNavegacao() {
+function BarraNavegacao({ rotaAtual, aoNavegar }) {
   return (
     <nav aria-label="Navegação principal" className="barra-navegacao">
-      <a className="marca" href="#inicio" aria-label="Voltar ao início">
+      <button type="button" className="marca" onClick={() => aoNavegar("inicio")}>
         Rafael Alves
-      </a>
+      </button>
+
       <ul>
         {menuLinks.map((link) => (
-          <li key={link.destino}>
-            <a href={link.destino}>{link.texto}</a>
+          <li key={link.id}>
+            <button
+              type="button"
+              className={rotaAtual === link.id ? "nav-item active" : "nav-item"}
+              onClick={() => aoNavegar(link.id)}
+            >
+              {link.texto}
+            </button>
           </li>
         ))}
       </ul>
@@ -36,7 +42,7 @@ function BarraNavegacao() {
   );
 }
 
-function Apresentacao() {
+function Apresentacao({ aoNavegar }) {
   const imagemApresentacao = new URL("./assets/img/projeto 2.jpeg", import.meta.url).href;
 
   return (
@@ -44,32 +50,40 @@ function Apresentacao() {
       <div className="apresentacao-texto">
         <p className="apresentacao-introducao">Portfolio do ano letivo</p>
         <h1>
-          Experiências, 
+          Experiências,
           <span>aprendizado</span>
           <br />
           e evolução em tecnologia.
         </h1>
         <p className="apresentacao-descricao">
-          Este espaço reúne as atividades desenvolvidas no percurso escolar, destacando
-          os aprendizados do SENAI e do SESI em um ambiente profissional, organizado e
-          visualmente moderno.
+          Reúne as atividades do SENAI e do SESI em um espaço moderno, pensado para mostrar
+          a trajetória escolar com clareza, identidade e profissionalismo.
         </p>
+
         <div className="apresentacao-links">
-          <a className="link-destaque" href="#atividades">
+          <button type="button" className="link-destaque" onClick={() => aoNavegar("atividades")}>
             Ver atividades
-          </a>
-          <a className="link-secundario" href="#admin">
-            Área do administrador
-          </a>
+          </button>
+          <button type="button" className="link-secundario" onClick={() => aoNavegar("admin")}>
+            Administração
+          </button>
         </div>
       </div>
 
-      <figure className="apresentacao-imagem">
-        <img
-          src={imagemApresentacao}
-          alt="Estudante em ambiente de tecnologia com foco em desenvolvimento e aprendizado"
-        />
-      </figure>
+      <div className="hero-visual">
+        <figure className="apresentacao-imagem">
+          <img
+            src={imagemApresentacao}
+            alt="Estudante em ambiente de tecnologia com foco em desenvolvimento e aprendizado"
+          />
+        </figure>
+
+        <div className="floating-card">
+          <span className="floating-label">Ano letivo</span>
+          <strong>2026</strong>
+          <small>Desenvolvimento, estudo e inovação</small>
+        </div>
+      </div>
     </section>
   );
 }
@@ -88,26 +102,129 @@ function UnidadeCard({ unidade }) {
   );
 }
 
-function AtividadeCard({ atividade }) {
+function AtividadeCard({ atividade, aoAbrirDetalhe }) {
   return (
     <article className="atividade-card">
       <img src={atividade.imagem} alt={atividade.titulo} />
+
       <div className="atividade-conteudo">
         <div className="atividade-cabecalho">
           <span className="badge badge-light">{atividade.unidade}</span>
           <span className="periodo">{atividade.periodo}</span>
         </div>
+
         <h3>{atividade.titulo}</h3>
         <p>{atividade.descricao}</p>
-        {atividade.pdf ? (
-          <a href={atividade.pdf} target="_blank" rel="noreferrer" className="pdf-link">
-            Ver PDF
-          </a>
-        ) : (
-          <span className="pdf-link mute">Sem arquivo em PDF</span>
-        )}
+
+        <div className="atividade-acoes">
+          <button type="button" className="btn-ghost" onClick={() => aoAbrirDetalhe(atividade)}>
+            Ver detalhes
+          </button>
+
+          {atividade.pdf ? (
+            <a href={atividade.pdf} target="_blank" rel="noreferrer" className="pdf-link">
+              PDF
+            </a>
+          ) : (
+            <span className="pdf-link mute">Sem PDF</span>
+          )}
+        </div>
       </div>
     </article>
+  );
+}
+
+function SelecaoAtividades({ atividades, aoAbrirDetalhe }) {
+  const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState("Todas");
+
+  const atividadesFiltradas = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+
+    return atividades.filter((atividade) => {
+      const atendeBusca =
+        termo.length === 0 ||
+        atividade.titulo.toLowerCase().includes(termo) ||
+        atividade.descricao.toLowerCase().includes(termo) ||
+        atividade.unidade.toLowerCase().includes(termo);
+
+      const atendeFiltro = filtro === "Todas" || atividade.unidade === filtro;
+
+      return atendeBusca && atendeFiltro;
+    });
+  }, [atividades, busca, filtro]);
+
+  return (
+    <section className="page-panel" id="atividades">
+      <div className="panel-header">
+        <div>
+          <p className="panel-kicker">Atividades do ano</p>
+          <h2>Registro de aprendizados</h2>
+        </div>
+
+        <div className="search-tools">
+          <input
+            type="search"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Pesquisar atividade"
+            aria-label="Pesquisar atividades"
+          />
+
+          <select value={filtro} onChange={(event) => setFiltro(event.target.value)} aria-label="Filtrar por unidade">
+            <option value="Todas">Todas</option>
+            <option value="SENAI">SENAI</option>
+            <option value="SESI">SESI</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid-atividades">
+        {atividadesFiltradas.length > 0 ? (
+          atividadesFiltradas.map((atividade) => (
+            <AtividadeCard key={atividade.id} atividade={atividade} aoAbrirDetalhe={aoAbrirDetalhe} />
+          ))
+        ) : (
+          <div className="empty-state">
+            <strong>Nenhuma atividade encontrada.</strong>
+            <p>Tente outra palavra-chave ou altere o filtro da unidade.</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ModalDetalhe({ atividade, aoFechar }) {
+  if (!atividade) {
+    return null;
+  }
+
+  return (
+    <div className="modal-overlay" onClick={aoFechar}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <button type="button" className="modal-close" onClick={aoFechar} aria-label="Fechar modal">
+          ×
+        </button>
+
+        <img src={atividade.imagem} alt={atividade.titulo} />
+
+        <div className="modal-body">
+          <span className="badge badge-light">{atividade.unidade}</span>
+          <h3>{atividade.titulo}</h3>
+          <p className="modal-periodo">{atividade.periodo}</p>
+          <p>{atividade.descricao}</p>
+
+          {atividade.pdf ? (
+            <a href={atividade.pdf} target="_blank" rel="noreferrer" className="pdf-link">
+              Abrir arquivo em PDF
+            </a>
+          ) : (
+            <span className="pdf-link mute">Arquivo PDF não disponível</span>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -169,11 +286,11 @@ function AdminController({ atividades, setAtividades }) {
   }
 
   return (
-    <section className="admin-panel" id="admin">
+    <section className="page-panel admin-panel" id="admin">
       <div className="panel-header">
         <div>
           <p className="panel-kicker">Painel administrativo</p>
-          <h2>Adicionar atividade</h2>
+          <h2>Adicionar nova atividade</h2>
         </div>
         <span className="status-pill">{atividades.length} registros</span>
       </div>
@@ -225,24 +342,14 @@ function AdminController({ atividades, setAtividades }) {
 
           <div className="form-dupla">
             <label>
-              Imagem da atividade
-              <input
-                type="file"
-                name="imagem"
-                accept="image/*"
-                onChange={atualizarArquivo}
-              />
+              Imagem
+              <input type="file" name="imagem" accept="image/*" onChange={atualizarArquivo} />
               {form.imagemNome ? <span className="arquivo-nome">{form.imagemNome}</span> : null}
             </label>
 
             <label>
-              PDF do material
-              <input
-                type="file"
-                name="pdf"
-                accept="application/pdf"
-                onChange={atualizarArquivo}
-              />
+              PDF
+              <input type="file" name="pdf" accept="application/pdf" onChange={atualizarArquivo} />
               {form.pdfNome ? <span className="arquivo-nome">{form.pdfNome}</span> : null}
             </label>
           </div>
@@ -255,11 +362,14 @@ function AdminController({ atividades, setAtividades }) {
         <div className="preview-admin">
           <h3>Pré-visualização</h3>
           <div className="preview-card">
-            <img src={form.imagem || new URL("./assets/img/projeto 3.jpeg", import.meta.url).href} alt="Prévia da atividade" />
+            <img
+              src={form.imagem || new URL("./assets/img/projeto 3.jpeg", import.meta.url).href}
+              alt="Prévia da atividade"
+            />
             <div className="preview-card-body">
               <span className="badge badge-light">{form.unidade}</span>
               <h4>{form.titulo || "Título da atividade"}</h4>
-              <p>{form.descricao || "Descrição da atividade será exibida aqui."}</p>
+              <p>{form.descricao || "A descrição ficará disponível aqui."}</p>
             </div>
           </div>
         </div>
@@ -280,13 +390,11 @@ function Rodape() {
         <div className="rodape-identificacao">
           <p className="rodape-nome">Rafael Alves</p>
           <p className="rodape-curso">Técnico em Tecnologia da Informação</p>
-          <nav aria-label="Navegação do rodapé" className="rodape-navegacao">
-            {menuLinks.slice(1).map((link) => (
-              <a href={link.destino} key={link.destino}>
-                {link.texto}
-              </a>
-            ))}
-          </nav>
+          <div className="rodape-navegacao">
+            <span>SENAI</span>
+            <span>SESI</span>
+            <span>Portfolio</span>
+          </div>
         </div>
       </div>
     </footer>
@@ -294,59 +402,61 @@ function Rodape() {
 }
 
 export default function Aplicativo() {
+  const [rotaAtual, setRotaAtual] = useState("inicio");
   const [atividades, setAtividades] = useState(portfolioModel.atividades);
+  const [atividadeSelecionada, setAtividadeSelecionada] = useState(null);
+
+  const cardsUnidades = portfolioModel.unidades;
 
   return (
     <>
-      <header className="cabecalho-principal">
-        <BarraNavegacao />
-        <Apresentacao />
-      </header>
+      <div className="site-shell">
+        <header className="cabecalho-principal">
+          <BarraNavegacao rotaAtual={rotaAtual} aoNavegar={setRotaAtual} />
+          <Apresentacao aoNavegar={setRotaAtual} />
+        </header>
 
-      <main className="conteudo-principal">
-        <section className="sobre" id="sobre">
-          <div className="secao-titulo">
-            <p className="panel-kicker">Sobre o percurso</p>
-            <h2>Uma formação pensada para o futuro.</h2>
-          </div>
-          <p>
-            Ao longo do ano letivo, desenvolvi atividades que conectam teoria, prática e
-            criatividade. O aprendizado de tecnologia não se limita ao código; ele também
-            envolve organização, resolução de problemas, comunicação e capacidade de apresentar
-            ideias com clareza e qualidade.
-          </p>
-        </section>
+        <main className="conteudo-principal">
+          {rotaAtual === "inicio" && (
+            <>
+              <section className="overview-panel">
+                <div className="secao-titulo">
+                  <p className="panel-kicker">Sobre o percurso</p>
+                  <h2>Uma formação pensada para o futuro.</h2>
+                </div>
+                <p>
+                  Ao longo do ano letivo, desenvolvi atividades que conectam teoria, prática e
+                  criatividade. O aprendizado vai além do código: envolve organização, comunicação,
+                  resolução de problemas e clareza na apresentação das ideias.
+                </p>
+              </section>
 
-        <section className="unidades" id="unidades">
-          <div className="secao-titulo">
-            <p className="panel-kicker">Estrutura escolar</p>
-            <h2>As duas unidades do projeto</h2>
-          </div>
+              <section className="unidades" id="unidades">
+                <div className="secao-titulo">
+                  <p className="panel-kicker">Estrutura escolar</p>
+                  <h2>As duas unidades em destaque</h2>
+                </div>
 
-          <div className="grid-unidades">
-            {portfolioModel.unidades.map((unidade) => (
-              <UnidadeCard key={unidade.nome} unidade={unidade} />
-            ))}
-          </div>
-        </section>
+                <div className="grid-unidades">
+                  {cardsUnidades.map((unidade) => (
+                    <UnidadeCard key={unidade.nome} unidade={unidade} />
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
 
-        <section className="atividades" id="atividades">
-          <div className="secao-titulo">
-            <p className="panel-kicker">Atividades do ano</p>
-            <h2>Registro de trabalhos e aprendizados</h2>
-          </div>
+          {rotaAtual === "atividades" && (
+            <SelecaoAtividades atividades={atividades} aoAbrirDetalhe={setAtividadeSelecionada} />
+          )}
 
-          <div className="grid-atividades">
-            {atividades.map((atividade) => (
-              <AtividadeCard key={atividade.id} atividade={atividade} />
-            ))}
-          </div>
-        </section>
+          {rotaAtual === "admin" && <AdminController atividades={atividades} setAtividades={setAtividades} />}
+        </main>
 
-        <AdminController atividades={atividades} setAtividades={setAtividades} />
-      </main>
+        <Rodape />
+      </div>
 
-      <Rodape />
+      <ModalDetalhe atividade={atividadeSelecionada} aoFechar={() => setAtividadeSelecionada(null)} />
     </>
   );
 }
