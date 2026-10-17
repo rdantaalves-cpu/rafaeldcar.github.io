@@ -1,0 +1,13 @@
+{
+  "name": "portfolio-escolar",
+  "version": "1.0.0",
+  "description": "Backend do Sistema de Portfólio Escolar (MVP) - Rafael Danta Alves Cardozo, 3D",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
