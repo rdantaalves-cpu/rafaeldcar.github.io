@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { portfolioModel } from "./data/portfolioData";
 
 const menuLinks = [
@@ -244,8 +244,9 @@ function ModalDetalhe({ atividade, aoFechar }) {
   );
 }
 
-function AdminController({ atividades, setAtividades }) {
+function AdminController({ atividades, setAtividades, erroApi }) {
   const [form, setForm] = useState(formInicial);
+  const [erroFormulario, setErroFormulario] = useState("");
 
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
@@ -268,17 +269,20 @@ function AdminController({ atividades, setAtividades }) {
       return;
     }
 
-    const url = URL.createObjectURL(arquivo);
-
-    setForm((estadoAnterior) => ({
-      ...estadoAnterior,
-      [name]: url,
-      [`${name}Nome`]: arquivo.name,
-    }));
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      setForm((estadoAnterior) => ({
+        ...estadoAnterior,
+        [name]: leitor.result,
+        [`${name}Nome`]: arquivo.name,
+      }));
+    };
+    leitor.readAsDataURL(arquivo);
   }
 
-  function enviarFormulario(evento) {
+  async function enviarFormulario(evento) {
     evento.preventDefault();
+    setErroFormulario("");
 
     const tituloLimpo = form.titulo.trim();
     const descricaoLimpa = form.descricao.trim();
@@ -287,18 +291,38 @@ function AdminController({ atividades, setAtividades }) {
       return;
     }
 
-    const novaAtividade = {
-      id: Date.now(),
-      titulo: tituloLimpo,
-      unidade: form.unidade,
-      periodo: form.periodo || "Período não informado",
-      descricao: descricaoLimpa,
-      imagem: form.imagem || new URL("./assets/img/projeto 1.jpeg", import.meta.url).href,
-      pdf: form.pdf || "",
-    };
+    try {
+      const resposta = await fetch("/api/atividades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: tituloLimpo,
+          descricao: descricaoLimpa,
+          unidade: form.unidade,
+          periodo: form.periodo || "Período não informado",
+          imagem: form.imagem,
+          pdf: form.pdf,
+        }),
+      });
 
-    setAtividades((estadoAnterior) => [novaAtividade, ...estadoAnterior]);
-    setForm(formInicial);
+      const dados = await resposta.json();
+      if (!resposta.ok) {
+        throw new Error(dados.erro || "Não foi possível salvar a atividade.");
+      }
+
+      const novaAtividade = {
+        ...dados,
+        imagem: dados.imagem || new URL("./assets/img/projeto 1.jpeg", import.meta.url).href,
+        pdf: dados.pdf || "",
+        periodo: dados.periodo || "Período não informado",
+        unidade: dados.unidade || "SENAI",
+      };
+
+      setAtividades((estadoAnterior) => [novaAtividade, ...estadoAnterior]);
+      setForm(formInicial);
+    } catch (erro) {
+      setErroFormulario(erro.message || "Não foi possível conectar ao backend.");
+    }
   }
 
   return (
@@ -310,6 +334,11 @@ function AdminController({ atividades, setAtividades }) {
         </div>
         <span className="status-pill">{atividades.length} registros</span>
       </div>
+
+      {erroApi ? (
+        <p role="alert">Backend indisponível. Inicie o servidor para carregar e salvar atividades.</p>
+      ) : null}
+      {erroFormulario ? <p role="alert">{erroFormulario}</p> : null}
 
       <div className="admin-layout">
         <form onSubmit={enviarFormulario} className="form-admin">
@@ -421,6 +450,44 @@ export default function Aplicativo() {
   const [rotaAtual, setRotaAtual] = useState("inicio");
   const [atividades, setAtividades] = useState(portfolioModel.atividades);
   const [atividadeSelecionada, setAtividadeSelecionada] = useState(null);
+  const [erroApi, setErroApi] = useState(false);
+
+  useEffect(() => {
+    let componenteAtivo = true;
+
+    fetch("/api/atividades")
+      .then((resposta) => {
+        if (!resposta.ok) {
+          throw new Error("Falha ao carregar atividades.");
+        }
+        return resposta.json();
+      })
+      .then((dados) => {
+        if (!componenteAtivo) {
+          return;
+        }
+
+        const atividadesApi = dados.map((atividade) => ({
+          ...atividade,
+          imagem: atividade.imagem || new URL("./assets/img/projeto 1.jpeg", import.meta.url).href,
+          pdf: atividade.pdf || "",
+          periodo: atividade.periodo || "Período não informado",
+          unidade: atividade.unidade || "SENAI",
+        }));
+
+        setAtividades([...atividadesApi, ...portfolioModel.atividades]);
+        setErroApi(false);
+      })
+      .catch(() => {
+        if (componenteAtivo) {
+          setErroApi(true);
+        }
+      });
+
+    return () => {
+      componenteAtivo = false;
+    };
+  }, []);
 
   const cardsUnidades = portfolioModel.unidades;
 
@@ -467,7 +534,9 @@ export default function Aplicativo() {
             <SelecaoAtividades atividades={atividades} aoAbrirDetalhe={setAtividadeSelecionada} />
           )}
 
-          {rotaAtual === "admin" && <AdminController atividades={atividades} setAtividades={setAtividades} />}
+          {rotaAtual === "admin" && (
+            <AdminController atividades={atividades} setAtividades={setAtividades} erroApi={erroApi} />
+          )}
         </main>
 
         <Rodape />

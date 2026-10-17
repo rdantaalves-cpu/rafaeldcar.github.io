@@ -29,11 +29,14 @@ Corpo (JSON):
   "descricao": "Atividade desenvolvida para revisar o conteúdo de Ciências da Natureza.",
   "disciplina": { "nome_materia": "Ciências da Natureza", "tipo_ensino": "Comum" },
   "unidade": "SESI",
-  "periodo": "Agosto / 2026"
+  "periodo": "Agosto / 2026",
+  "imagem": "data:image/png;base64,...",
+  "pdf": "data:application/pdf;base64,..."
 }
 ```
 - `titulo` e `descricao`: obrigatórios (espaços nas pontas são removidos).
-- `disciplina`, `unidade` (`SENAI` ou `SESI`) e `periodo`: opcionais — correspondem aos campos que o site já usa.
+- `disciplina`, `unidade` (`SENAI` ou `SESI`), `periodo`, `imagem` e `pdf`: opcionais.
+- Imagens e PDFs são enviados como Data URL em JSON; o limite do corpo da requisição é 15 MB.
 - **201 Created** → retorna a atividade com `id` e `data_criacao` gerados pelo servidor.
 - **400 Bad Request** → `{ "erro": "Dados inválidos.", "detalhes": ["..."] }`
 
@@ -67,9 +70,9 @@ Corpo (JSON):
 ## Limitações
 - Dados em memória (perdidos ao reiniciar).
 - Sem login, autenticação ou banco de dados (fora do escopo desta etapa).
-- Sem upload de imagem/PDF: o formulário do site usa esses campos, mas a API ainda não os recebe.
+- Imagens e PDFs ficam em memória como Data URL e são perdidos quando o servidor reinicia.
 - Apenas criar e listar (sem editar ou excluir).
-- O site React ainda **não está conectado** à API (ele usa dados locais). Isso é uma etapa futura.
+- O site React consulta e cadastra atividades pela API; atividades de exemplo continuam aparecendo junto com os registros da API.
 - Os testes não foram executados por quem gerou este código; execute-os você mesmo seguindo a seção acima.
 
 ---

@@ -4,7 +4,7 @@ const atividadeRoutes = require("./routes/atividadeRoutes");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "http://localhost:5173");
@@ -25,6 +25,9 @@ app.use((req, res) => {
 app.use((erro, req, res, next) => {
   if (erro.type === "entity.parse.failed") {
     return res.status(400).json({ erro: "JSON inválido no corpo da requisição." });
+  }
+  if (erro.type === "entity.too.large") {
+    return res.status(413).json({ erro: "O arquivo enviado excede o limite permitido." });
   }
   console.error(erro);
   res.status(500).json({ erro: "Erro interno do servidor." });

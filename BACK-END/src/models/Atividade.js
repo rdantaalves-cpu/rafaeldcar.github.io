@@ -3,7 +3,7 @@ const { randomUUID } = require("crypto");
 const UNIDADES_VALIDAS = ["SENAI", "SESI"];
 
 class Atividade {
-  constructor({ titulo, descricao, disciplina, unidade, periodo }) {
+  constructor({ titulo, descricao, disciplina, unidade, periodo, imagem, pdf }) {
     this.id = randomUUID(); // gerado no backend
     this.titulo = titulo.trim();
     this.descricao = descricao.trim();
@@ -20,6 +20,8 @@ class Atividade {
     // Campos opcionais que o site (front-end) já usa:
     this.unidade = unidade ? String(unidade).trim().toUpperCase() : null;
     this.periodo = periodo ? String(periodo).trim() : null;
+    this.imagem = imagem || null;
+    this.pdf = pdf || null;
   }
 
   // Recebe os dados brutos e devolve uma lista de erros (vazia = dados válidos).
@@ -60,6 +62,14 @@ class Atividade {
 
     if (dados.periodo !== undefined && dados.periodo !== null && typeof dados.periodo !== "string") {
       erros.push("O campo 'periodo' deve ser um texto.");
+    }
+
+    if (dados.imagem !== undefined && dados.imagem !== null && typeof dados.imagem !== "string") {
+      erros.push("O campo 'imagem' deve ser um texto.");
+    }
+
+    if (dados.pdf !== undefined && dados.pdf !== null && typeof dados.pdf !== "string") {
+      erros.push("O campo 'pdf' deve ser um texto.");
     }
 
     return erros;

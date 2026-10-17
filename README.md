@@ -5,7 +5,7 @@ Portfólio desenvolvido com React e Vite.
 ## Estrutura
 
 - `FRONT-END/`: aplicação React, estilos, imagens e configuração do Vite.
-- `BACK-END/`: espaço reservado para o futuro back-end.
+- `BACK-END/`: API Express para consultar e cadastrar atividades.
 - `index.html`: encaminha para a versão compilada em `FRONT-END/dist/`.
 
 ## Requisitos
@@ -20,31 +20,33 @@ node --version
 npm --version
 ```
 
-## Rodar no navegador
+## Rodar o projeto localmente
 
-1. Abra o terminal na pasta principal do projeto.
-2. Entre na pasta do front-end:
+O front-end e o backend devem rodar ao mesmo tempo, cada um em um terminal.
+
+1. No primeiro terminal, inicie a API:
+
+	```powershell
+	cd BACK-END
+	npm install
+	npm start
+	```
+
+	A API ficará em `http://localhost:3000`.
+
+2. No segundo terminal, inicie o front-end:
 
 	```powershell
 	cd FRONT-END
-	```
-
-3. Instale as dependências:
-
-	```powershell
 	npm ci
-	```
-
-4. Inicie o servidor de desenvolvimento:
-
-	```powershell
 	npm run dev
 	```
 
-5. Abra no navegador o endereço mostrado no terminal. Por padrão, o Vite usa `http://localhost:5173/`.
-6. Para encerrar o servidor, volte ao terminal e pressione `Ctrl+C`.
+3. Acesse o endereço do Vite, normalmente `http://localhost:5173/`.
 
-Use o servidor Vite para desenvolver. Abrir `FRONT-END/index.html` diretamente com duplo clique não processa os módulos React.
+O Vite encaminha as chamadas `/api` para o backend local. Para encerrar os servidores, pressione `Ctrl+C` em cada terminal. Abrir os arquivos HTML diretamente não inicia o backend.
+
+O GitHub Pages hospeda apenas arquivos estáticos; para usar a API publicada, será necessário hospedar o backend em um serviço separado e configurar o endereço dele.
 
 ## Como a página é montada
 
