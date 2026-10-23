@@ -19,9 +19,35 @@ npm start
 ```
 O servidor usa `process.env.PORT` (padrão **3000**): http://localhost:3000
 
+### Configuração do acesso do autor
+O cadastro exige uma única conta configurada no ambiente. Copie `.env.example` para `.env` e preencha:
+- `ADMIN_EMAIL`: e-mail autorizado.
+- `ADMIN_PASSWORD_HASH`: hash scrypt no formato `salt:hash`; não use a senha em texto puro.
+- `SESSION_SECRET`: segredo aleatório exclusivo para assinar as sessões.
+- `FRONTEND_URL`: origem autorizada do frontend.
+
+Para gerar um hash sem salvar a senha no código, execute no terminal do backend e substitua `SUA_SENHA`:
+```bash
+node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');process.stdout.write(s+':'+c.scryptSync(process.argv[1],s,64).toString('hex'))" "SUA_SENHA"
+```
+Gere `SESSION_SECRET` com `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
+O `.env` é ignorado pelo Git. Em produção, configure essas variáveis no ambiente do servidor e use HTTPS.
+
 ## Rotas
 
-### POST `/api/atividades` — criar atividade
+### POST `/api/auth/login` — entrar
+Recebe `{ "email": "...", "senha": "..." }` e cria uma sessão em cookie `HttpOnly`.
+- **200 OK** → `{ "autenticado": true, "email": "..." }`.
+- **401 Unauthorized** → credenciais incorretas.
+- Após cinco tentativas em 15 minutos, novos logins ficam limitados temporariamente.
+
+### GET `/api/auth/session` — consultar sessão
+- **200 OK** → `{ "autenticado": true|false, "email": "..." }`.
+
+### POST `/api/auth/logout` — sair
+Encerra a sessão atual.
+
+### POST `/api/atividades` — criar atividade (somente autor autenticado)
 Corpo (JSON):
 ```json
 {
@@ -38,6 +64,7 @@ Corpo (JSON):
 - `disciplina`, `unidade` (`SENAI` ou `SESI`), `periodo`, `imagem` e `pdf`: opcionais.
 - Imagens e PDFs são enviados como Data URL em JSON; o limite do corpo da requisição é 15 MB.
 - **201 Created** → retorna a atividade com `id` e `data_criacao` gerados pelo servidor.
+- **401 Unauthorized** → é necessário entrar na conta do autor.
 - **400 Bad Request** → `{ "erro": "Dados inválidos.", "detalhes": ["..."] }`
 
 ### GET `/api/atividades` — listar atividades
@@ -46,16 +73,20 @@ Corpo (JSON):
 ## Como testar (Thunder Client ou Postman)
 1. Inicie com `npm start`.
 2. `GET http://localhost:3000/api/atividades` → deve retornar `[]`.
-3. `POST http://localhost:3000/api/atividades` com *Body → JSON* (exemplo acima) → deve retornar 201.
-4. Envie um POST com `"titulo": "   "` → deve retornar 400 com a mensagem de erro.
-5. Repita o GET → a atividade criada deve aparecer.
+3. Entre em `POST http://localhost:3000/api/auth/login` com as credenciais configuradas; mantenha os cookies da sessão.
+4. `POST http://localhost:3000/api/atividades` com *Body → JSON* (exemplo acima) → deve retornar 201.
+5. Envie um POST sem sessão → deve retornar 401.
+6. Repita o GET → a atividade criada deve aparecer sem exigir login.
 
 ## Arquivos
 | Arquivo | Função |
 |---|---|
 | `src/models/Atividade.js` | Entidade `Atividade` + validações (não importa controller/rotas) |
 | `src/controllers/atividadeController.js` | Guarda a lista em memória, chama o model e responde HTTP |
-| `src/routes/atividadeRoutes.js` | Liga `POST` e `GET` às funções do controller |
+| `src/controllers/authController.js` | Login, sessão assinada e logout do autor |
+| `src/middleware/exigirAutenticacao.js` | Protege a criação de atividades |
+| `src/routes/authRoutes.js` | Rotas de sessão com limite de tentativas de login |
+| `src/routes/atividadeRoutes.js` | Liga `POST` protegido e `GET` público às funções do controller |
 | `src/app.js` | Configura Express, JSON, CORS simples e registra as rotas |
 | `.gitignore` | Impede subir `node_modules/` e `.env` |
 
@@ -69,10 +100,10 @@ Corpo (JSON):
 
 ## Limitações
 - Dados em memória (perdidos ao reiniciar).
-- Sem login, autenticação ou banco de dados (fora do escopo desta etapa).
+- A autenticação protege o cadastro; os dados ainda ficam em memória e são perdidos ao reiniciar.
 - Imagens e PDFs ficam em memória como Data URL e são perdidos quando o servidor reinicia.
 - Apenas criar e listar (sem editar ou excluir).
-- O site React consulta e cadastra atividades pela API; atividades de exemplo continuam aparecendo junto com os registros da API.
+- O site React consulta atividades publicamente; somente o autor autenticado vê o formulário de cadastro.
 - Os testes não foram executados por quem gerou este código; execute-os você mesmo seguindo a seção acima.
 
 ---

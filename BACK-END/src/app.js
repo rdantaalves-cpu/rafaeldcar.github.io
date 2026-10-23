@@ -1,5 +1,8 @@
+require("dotenv").config();
+
 const express = require("express");
 const atividadeRoutes = require("./routes/atividadeRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,11 +13,13 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "http://localhost:5173");
   res.header("Access-Control-Allow-Headers", "Content-Type");
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Credentials", "true");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
 app.use("/api/atividades", atividadeRoutes);
+app.use("/api/auth", authRoutes);
 
 // Rota não encontrada
 app.use((req, res) => {
